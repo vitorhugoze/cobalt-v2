@@ -954,9 +954,8 @@ class StreamHandler {
                         queryInitialPrivacySettings(),
                         queryInitialDisappearingMode(),
                         queryInitialBlockList()
-                )
-                .thenRunAsync(this::onInitialInfo)
-                .exceptionallyAsync(throwable -> socketHandler.handleFailure(LOGIN, throwable));
+                ).thenCompose(ignores -> onInitialInfo())
+        		.exceptionallyAsync(throwable -> socketHandler.handleFailure(LOGIN, throwable));
         CompletableFuture.allOf(loginFuture, attributeStore())
                 .thenComposeAsync(result -> socketHandler.keys().initialAppSync() ? CompletableFuture.completedFuture(null) : queryGroups())
                 .thenRunAsync(this::notifyChatsAndNewsletters);
@@ -1278,7 +1277,7 @@ class StreamHandler {
                         .thenApplyAsync(entries -> Node.of("category", Map.of("id", entries.getFirst().id()))));
     }
 
-    private void onInitialInfo() {
+    private CompletableFuture<Void> onInitialInfo() {
         if(!socketHandler.keys().registered()) {
             socketHandler.keys().setRegistered(true);
             socketHandler.store().serialize(true);
@@ -1301,6 +1300,8 @@ class StreamHandler {
         if (socketHandler.keys().initialAppSync()) {
             socketHandler.onContacts();
         }
+        
+        return CompletableFuture.completedFuture(null);
     }
 
     private CompletableFuture<Void> queryRequiredWebInfo() {
