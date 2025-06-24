@@ -22,7 +22,7 @@ public final class Jid implements JidProvider {
 
     private Jid(String user, JidServer server, int device, int agent) {
         this.user = user;
-        this.server = server;
+        this.server = agent == 1 ? JidServer.lid() : server;
         this.device = device;
         this.agent = agent;
     }
